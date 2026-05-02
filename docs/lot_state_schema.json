@@ -1,0 +1,580 @@
+{
+  "$defs": {
+    "Action": {
+      "enum": [
+        "pass",
+        "flag",
+        "kill"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "Application": {
+      "enum": [
+        "automotive",
+        "server",
+        "consumer",
+        "industrial"
+      ],
+      "title": "Application",
+      "type": "string"
+    },
+    "CheckpointResult": {
+      "description": "Output of one checkpoint analysis.",
+      "properties": {
+        "checkpoint_id": {
+          "maximum": 7,
+          "minimum": 1,
+          "title": "Checkpoint Id",
+          "type": "integer"
+        },
+        "step_name": {
+          "$ref": "#/$defs/StepName"
+        },
+        "tools_called": {
+          "items": {
+            "$ref": "#/$defs/ToolCall"
+          },
+          "title": "Tools Called",
+          "type": "array"
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "rule_fired": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rule Fired"
+        },
+        "forward_sim_prediction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ForwardSimPrediction"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cost_avoided_usd": {
+          "default": 0.0,
+          "title": "Cost Avoided Usd",
+          "type": "number"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "finished_at": {
+          "format": "date-time",
+          "title": "Finished At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checkpoint_id",
+        "step_name",
+        "tools_called",
+        "action",
+        "reasons",
+        "started_at",
+        "finished_at"
+      ],
+      "title": "CheckpointResult",
+      "type": "object"
+    },
+    "DebateLogEntry": {
+      "description": "One entry in the Debate Protocol audit log.",
+      "properties": {
+        "trigger": {
+          "title": "Trigger",
+          "type": "string"
+        },
+        "rule_applied": {
+          "title": "Rule Applied",
+          "type": "string"
+        },
+        "tools_in_conflict": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tools In Conflict",
+          "type": "array"
+        },
+        "resolution": {
+          "title": "Resolution",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trigger",
+        "rule_applied",
+        "tools_in_conflict",
+        "resolution",
+        "timestamp"
+      ],
+      "title": "DebateLogEntry",
+      "type": "object"
+    },
+    "DecisionState": {
+      "enum": [
+        "IN_PROGRESS",
+        "PASS",
+        "FLAG",
+        "KILL"
+      ],
+      "title": "DecisionState",
+      "type": "string"
+    },
+    "FailureModeProbability": {
+      "properties": {
+        "failure_mode": {
+          "title": "Failure Mode",
+          "type": "string"
+        },
+        "physics_model": {
+          "title": "Physics Model",
+          "type": "string"
+        },
+        "p_fail": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "P Fail",
+          "type": "number"
+        },
+        "confidence_interval": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Confidence Interval",
+          "type": "array"
+        },
+        "predicted_lifetime": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Predicted Lifetime"
+        },
+        "units": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Units"
+        }
+      },
+      "required": [
+        "failure_mode",
+        "physics_model",
+        "p_fail",
+        "confidence_interval"
+      ],
+      "title": "FailureModeProbability",
+      "type": "object"
+    },
+    "FinalDecision": {
+      "description": "Output of Person 3's orchestrator at Checkpoint 7 (Final Gate).",
+      "properties": {
+        "verdict": {
+          "$ref": "#/$defs/FinalVerdict"
+        },
+        "overall_p_fail": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Overall P Fail",
+          "type": "number"
+        },
+        "threshold_used": {
+          "title": "Threshold Used",
+          "type": "number"
+        },
+        "failure_modes": {
+          "items": {
+            "$ref": "#/$defs/FailureModeProbability"
+          },
+          "title": "Failure Modes",
+          "type": "array"
+        },
+        "debate_log": {
+          "items": {
+            "$ref": "#/$defs/DebateLogEntry"
+          },
+          "title": "Debate Log",
+          "type": "array"
+        },
+        "narrative": {
+          "title": "Narrative",
+          "type": "string"
+        },
+        "recommended_actions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Recommended Actions",
+          "type": "array"
+        },
+        "pdf_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pdf Url"
+        },
+        "total_cost_avoided_usd": {
+          "default": 0.0,
+          "title": "Total Cost Avoided Usd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "verdict",
+        "overall_p_fail",
+        "threshold_used",
+        "failure_modes",
+        "narrative"
+      ],
+      "title": "FinalDecision",
+      "type": "object"
+    },
+    "FinalVerdict": {
+      "enum": [
+        "SHIP",
+        "HOLD",
+        "REJECT"
+      ],
+      "title": "FinalVerdict",
+      "type": "string"
+    },
+    "ForwardSimPrediction": {
+      "description": "Output of the Survival Simulator at a given checkpoint.",
+      "properties": {
+        "starting_state": {
+          "title": "Starting State",
+          "type": "object"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/ForwardSimStep"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "fails_at_step": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StepName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "failure_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Reason"
+        },
+        "cost_avoided_usd": {
+          "default": 0.0,
+          "title": "Cost Avoided Usd",
+          "type": "number"
+        },
+        "narrative": {
+          "title": "Narrative",
+          "type": "string"
+        }
+      },
+      "required": [
+        "starting_state",
+        "steps",
+        "narrative"
+      ],
+      "title": "ForwardSimPrediction",
+      "type": "object"
+    },
+    "ForwardSimStep": {
+      "description": "One simulated future-step prediction.",
+      "properties": {
+        "step_name": {
+          "$ref": "#/$defs/StepName"
+        },
+        "predicted_state": {
+          "title": "Predicted State",
+          "type": "object"
+        },
+        "will_fail": {
+          "title": "Will Fail",
+          "type": "boolean"
+        },
+        "failure_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Mode"
+        }
+      },
+      "required": [
+        "step_name",
+        "predicted_state",
+        "will_fail"
+      ],
+      "title": "ForwardSimStep",
+      "type": "object"
+    },
+    "InputFiles": {
+      "description": "Files uploaded for analysis. Stored as paths (filesystem) or URLs.",
+      "properties": {
+        "xray_images": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Xray Images",
+          "type": "array"
+        },
+        "aoi_images": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Aoi Images",
+          "type": "array"
+        },
+        "reflow_csv": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reflow Csv"
+        },
+        "bond_force_log": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bond Force Log"
+        },
+        "test_data_csv": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Test Data Csv"
+        },
+        "material_spec_json": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material Spec Json"
+        }
+      },
+      "title": "InputFiles",
+      "type": "object"
+    },
+    "StepName": {
+      "enum": [
+        "DICING",
+        "DIE_ATTACH",
+        "WIRE_BOND",
+        "MOLDING",
+        "REFLOW",
+        "TEST",
+        "FINAL_GATE"
+      ],
+      "title": "StepName",
+      "type": "string"
+    },
+    "ToolCall": {
+      "description": "Records exactly which tool was invoked and what it returned. Required for traceability.",
+      "properties": {
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "tool_type": {
+          "$ref": "#/$defs/ToolType"
+        },
+        "output": {
+          "title": "Output",
+          "type": "object"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "runtime_ms": {
+          "title": "Runtime Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tool_name",
+        "tool_type",
+        "output",
+        "confidence",
+        "runtime_ms"
+      ],
+      "title": "ToolCall",
+      "type": "object"
+    },
+    "ToolType": {
+      "enum": [
+        "deterministic",
+        "ai"
+      ],
+      "title": "ToolType",
+      "type": "string"
+    }
+  },
+  "description": "Top-level lot object. Created by POST /analyze, mutated as it flows through\nthe 7-checkpoint pipeline, finalized when Person 3's orchestrator writes\n`final_decision`.",
+  "properties": {
+    "lot_id": {
+      "pattern": "^LOT-\\d{4}-\\d{3,}$",
+      "title": "Lot Id",
+      "type": "string"
+    },
+    "package_type": {
+      "title": "Package Type",
+      "type": "string"
+    },
+    "application": {
+      "$ref": "#/$defs/Application"
+    },
+    "lot_size": {
+      "default": 4000,
+      "title": "Lot Size",
+      "type": "integer"
+    },
+    "current_step": {
+      "default": 0,
+      "maximum": 7,
+      "minimum": 0,
+      "title": "Current Step",
+      "type": "integer"
+    },
+    "decision_state": {
+      "$ref": "#/$defs/DecisionState",
+      "default": "IN_PROGRESS"
+    },
+    "input_files": {
+      "$ref": "#/$defs/InputFiles"
+    },
+    "checkpoints": {
+      "items": {
+        "$ref": "#/$defs/CheckpointResult"
+      },
+      "title": "Checkpoints",
+      "type": "array"
+    },
+    "final_decision": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FinalDecision"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "lot_id",
+    "package_type",
+    "application",
+    "input_files",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "LotState",
+  "type": "object"
+}
