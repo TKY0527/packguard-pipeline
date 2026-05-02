@@ -26,6 +26,7 @@ from typing import Annotated, Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .checkpoints import ALL_CHECKPOINTS
@@ -45,8 +46,18 @@ app = FastAPI(
     description="Person 2 — Inline Checkpoint Pipeline + CV. Day 1 mock pipeline.",
 )
 
-# Day 5 task per API contract §5: add CORSMiddleware. Don't turn on yet —
-# Person 4's frontend isn't built yet, no need to pre-open the door.
+# CORS — allow Person 4's Next.js dev server (localhost:3000) to call us.
+# Without this, browsers block cross-origin XHR/fetch from the frontend.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 _pipeline = CheckpointPipeline(ALL_CHECKPOINTS)
