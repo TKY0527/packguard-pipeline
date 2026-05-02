@@ -30,6 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .checkpoints import ALL_CHECKPOINTS
+from .file_storage import reduce_to_input_files, save_upload
 from .models import (
     AnalyzeResponse,
     Application,
@@ -103,21 +104,19 @@ async def analyze(
     store: LotStore = Depends(get_store),
 ) -> AnalyzeResponse:
     """
-    Day 1: file content not actually inspected — checkpoints dispatch by lot_id
-    pattern. Day 2-4: hook real CV / physics here.
+    Day 2+: actually persist uploaded bytes to disk under data/uploads/<lot_id>/.
+    Checkpoints can then re-read images for real CV inference.
     """
     lot_id = lot_id_hint or _new_lot_id()
 
-    # Persist file names (we are NOT writing bytes to disk yet — Day 2 task).
-    upload_names: list[str] = [f.filename for f in (files or []) if f.filename]
-    input_files = InputFiles(
-        xray_images=[n for n in upload_names if "xray" in n.lower()],
-        aoi_images=[n for n in upload_names if "aoi" in n.lower() or "die" in n.lower()],
-        reflow_csv=next((n for n in upload_names if n.lower().endswith(".csv") and "reflow" in n.lower()), None),
-        bond_force_log=next((n for n in upload_names if "bond" in n.lower()), None),
-        test_data_csv=next((n for n in upload_names if "test" in n.lower() and n.lower().endswith(".csv")), None),
-        material_spec_json=next((n for n in upload_names if n.lower().endswith(".json")), None),
-    )
+    saved_paths = []
+    for f in (files or []):
+        if not f.filename:
+            continue
+        saved = save_upload(lot_id, f.filename, f.file)
+        saved_paths.append(saved)
+
+    input_files = InputFiles(**reduce_to_input_files(saved_paths))
 
     lot = LotState(
         lot_id=lot_id,
@@ -135,7 +134,7 @@ async def analyze(
         lot_id=lot.lot_id,
         decision_state=lot.decision_state,
         current_step=lot.current_step,
-        message=f"Pipeline complete: {lot.decision_state.value} at step {lot.current_step}",
+        message=f"Pipeline complete: {lot.decision_state.value} at step {lot.current_step} ({len(saved_paths)} files saved)",
     )
 
 
@@ -168,7 +167,13 @@ def fire_demo(
             detail="scenario must be one of: clean, early_kill, debate",
         )
 
-    application = Application.AUTOMOTIVE if scenario != "debate" else Application.SERVER
+    # Each scenario maps to a different application to showcase how the same
+    # physics meets different thresholds — that's the story the brief tells.
+    application = {
+        "clean": Application.CONSUMER,
+        "debate": Application.SERVER,
+        "early_kill": Application.AUTOMOTIVE,
+    }[scenario]
     lot = LotState(
         lot_id=_new_lot_id(scenario),
         package_type="BGA-256",

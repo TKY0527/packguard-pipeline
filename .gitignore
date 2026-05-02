@@ -11,7 +11,17 @@ data/synthetic/**/*.png
 data/synthetic/**/*.csv
 data/synthetic/**/*.json
 data/synthetic/dicing/
+data/synthetic/voids/
+data/synthetic/solder/
+data/synthetic/csvs/
 !data/synthetic/.gitkeep
+data/uploads/
+data/.vision_cache/
+models/
+runs/
+*.pt
+*.pth
+yolov8*.pt
 *.log
 *.pdf
 .DS_Store

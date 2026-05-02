@@ -40,10 +40,28 @@ APP_THRESHOLDS: dict[Application, float] = {
 }
 
 
+# Only LIFETIME / operational physics models contribute to lot-level P(fail).
+# One-shot manufacturing-event models (warpage, wire_sweep, griffith_fracture)
+# either already KILLed at their checkpoint (so we wouldn't be here) or are
+# orthogonal to lifetime risk. Calibration models (weibull_fit) report a
+# distribution shape, not a probability.
+_LIFETIME_MODELS = {
+    "coffin_manson",
+    "blacks_equation",
+    "pecks_model",
+    "arrhenius_imc",
+    "void_thermal_resistance",
+}
+
+
 def _aggregate_p_fail(lot: LotState) -> tuple[float, list[FailureModeProbability]]:
     """
-    Implement P(any failure) = 1 - prod(1 - P_i) over physics tool outputs.
-    Day 1 — no interaction terms; that's a Day 4 enhancement.
+    Implement P(any failure) = 1 - prod(1 - P_i) over LIFETIME physics modes.
+
+    Brief §5: per-failure-mode probabilities for solder fatigue, electromigration,
+    humidity-driven corrosion, IMC growth, etc. — the modes that quantify a
+    *lifetime* risk over service. Reflow-event and calibration models are
+    intentionally excluded from this aggregate.
     """
     modes: list[FailureModeProbability] = []
     survivors = 1.0
@@ -53,14 +71,16 @@ def _aggregate_p_fail(lot: LotState) -> tuple[float, list[FailureModeProbability
             if tc.tool_type != ToolType.DETERMINISTIC:
                 continue
             out = tc.output
-            # Recognize Person 1's PhysicsOutput shape
             if "probability_of_failure" not in out:
+                continue
+            model = out.get("model_used", tc.tool_name)
+            if model not in _LIFETIME_MODELS:
                 continue
             p_fail = float(out["probability_of_failure"])
             modes.append(
                 FailureModeProbability(
-                    failure_mode=out.get("model_used", tc.tool_name),
-                    physics_model=out.get("model_used", tc.tool_name),
+                    failure_mode=model,
+                    physics_model=model,
                     p_fail=p_fail,
                     confidence_interval=tuple(out.get("confidence_interval", (max(0.0, p_fail - 0.01), min(1.0, p_fail + 0.01)))),
                     predicted_lifetime=out.get("predicted_lifetime"),
